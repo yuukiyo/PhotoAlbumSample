@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An AWS Serverless Specification template describing your function.
+
+Parameters:
+  PhotoAppBucketName:
+    Type: String
+  DeployBucketName:
+    Type: String
+
+Globals:
+  Api:
+     Cors: "'*'"
+Resources:
+  DevAWSomePhotoApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: 'prod'
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: !Sub 's3://${DeployBucketName}/swagger.yaml'
+  DevAWSomePhotoList:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: js/index.handler
+      Runtime: nodejs8.10
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: !GetAtt DevAWSomePhotoListRole.Arn
+      Environment:
+        Variables:
+          BUCKET_NAME: !Sub ${PhotoAppBucketName}
+      Events:
+        GetAPI:
+          Type: Api
+          Properties:
+            Path: /photos/{username}
+            Method: GET
+            RestApiId: !Ref DevAWSomePhotoApi
+  DevAWSomePhotoListPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName:
+        'Fn::GetAtt':
+          - DevAWSomePhotoList
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        'Fn::Sub': 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:*/*/*/*'
+  DevAWSomePhotoListRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: "dynamodb_access_lambda"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "cloudwatch:*"
+                Resource: "*"
+              - Effect: "Allow"
+                Action: "logs:*"
+                Resource: "*"
+              - Effect: "Allow"
+                Action: "dynamodb:*"
+                Resource: "*"
+              - Effect: "Allow"
+                Action: "s3:*"
+                Resource: "*"
+Outputs:
+  ApiUrl:
+    Description: URL of your API endpoint
+    Value: !Sub https://${DevAWSomePhotoApi}.execute-api.${AWS::Region}.amazonaws.com/prod

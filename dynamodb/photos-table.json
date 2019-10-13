@@ -1,0 +1,49 @@
+{
+    "LocalSecondaryIndexes": [
+        {
+            "IndexName": "username-updatetime-index", 
+            "Projection": {
+                "ProjectionType": "ALL"
+            }, 
+            "KeySchema": [
+                {
+                    "KeyType": "HASH", 
+                    "AttributeName": "username"
+                }, 
+                {
+                    "KeyType": "RANGE", 
+                    "AttributeName": "updatetime"
+                }
+            ]
+        }
+    ], 
+    "AttributeDefinitions": [
+        {
+            "AttributeName": "objectkey", 
+            "AttributeType": "S"
+        }, 
+        {
+            "AttributeName": "updatetime", 
+            "AttributeType": "S"
+        }, 
+        {
+            "AttributeName": "username", 
+            "AttributeType": "S"
+        }
+    ], 
+    "ProvisionedThroughput": {
+        "WriteCapacityUnits": 5, 
+        "ReadCapacityUnits": 5
+    }, 
+    "TableName": "devawsome-photos", 
+    "KeySchema": [
+        {
+            "KeyType": "HASH", 
+            "AttributeName": "username"
+        }, 
+        {
+            "KeyType": "RANGE", 
+            "AttributeName": "objectkey"
+        }
+    ]
+}
